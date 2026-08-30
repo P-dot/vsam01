@@ -1,89 +1,101 @@
-# VSAM01 — Parte 2: definición de los cuatro tipos VSAM
+﻿# VSAM01 — Part 2: Definition of the Four VSAM Types
 
-## Objetivo
+## Objective
 
-Cerrar la fase estructural de VSAM01 dejando definidos, observados y comparados los cuatro tipos tratados en la lección: ESDS, KSDS, RRDS y LDS. Esta segunda parte retoma el trabajo previo y completa la definición/inspección del RRDS y la definición/inspección del LDS.
+Complete the structural phase of VSAM01 by defining, inspecting, and comparing the four VSAM types covered in the lesson: ESDS, KSDS, RRDS, and LDS.
 
-## Estado al comenzar esta parte
+This second part resumes the previous work and completes the definition and inspection of the RRDS, followed by the definition and inspection of the LDS.
 
-Ya estaban completados ESDS y KSDS, y el RRDS había sido definido pero faltaba su inspección detallada mediante LISTCAT ALL.
+## Status at the Beginning of This Part
 
-## Trabajo realizado
+ESDS and KSDS had already been completed, while the RRDS had been defined but still required detailed inspection using LISTCAT ALL.
 
-1. Se creó una librería JCL dedicada para continuar el laboratorio: `IBMUSER.VSAM.JCL`.
-2. Se ejecutó `LSTRRDS` para consultar el cluster RRDS y su componente DATA.
-3. `LSTRRDS` finalizó con `CC 0000`.
-4. LISTCAT confirmó la organización `NUMBERED`, registros de 80 bytes, componente DATA, ausencia de INDEX, CI de 4096 bytes, volumen `SBWAS1` y estado vacío.
-5. Se definió `IBMUSER.VSAM.LAB01.LDS` mediante IDCAMS con organización `LINEAR`.
-6. `DEFLDS` finalizó con `CC 0000`.
-7. ISPF confirmó la aparición del cluster LDS y su componente DATA.
-8. Se ejecutó `LSTLDS` para inspeccionar el cluster LDS y su componente DATA.
-9. `LSTLDS` finalizó con `CC 0000` y confirmó la organización LINEAR.
+## Work Performed
 
-## Comparación estructural cerrada
+1. A dedicated JCL library was created to continue the laboratory: IBMUSER.VSAM.JCL.
+2. LSTRRDS was executed to inspect the RRDS cluster and its DATA component.
+3. LSTRRDS completed with CC 0000.
+4. LISTCAT confirmed the NUMBERED organization, 80-byte records, DATA component, absence of an INDEX component, 4096-byte CI, volume SBWAS1, and an empty initial state.
+5. IBMUSER.VSAM.LAB01.LDS was defined using IDCAMS with the LINEAR organization.
+6. DEFLDS completed with CC 0000.
+7. ISPF confirmed the creation of the LDS cluster and its DATA component.
+8. LSTLDS was executed to inspect the LDS cluster and its DATA component.
+9. LSTLDS completed with CC 0000 and confirmed the LINEAR organization.
 
-| Tipo | Organización IDCAMS | Identificación/acceso característico | Componentes |
+## Completed Structural Comparison
+
+| Type | IDCAMS Organization | Characteristic Identification / Access | Components |
 |---|---|---|---|
-| ESDS | NONINDEXED | orden de entrada / RBA | DATA |
-| KSDS | INDEXED | clave | DATA + INDEX |
+| ESDS | NONINDEXED | Entry sequence / RBA | DATA |
+| KSDS | INDEXED | Key | DATA + INDEX |
 | RRDS | NUMBERED | RRN | DATA |
-| LDS | LINEAR | espacio lineal / bytes y CI | DATA |
+| LDS | LINEAR | Linear space / bytes and CI | DATA |
 
-Tener únicamente componente DATA no hace equivalentes a ESDS, RRDS y LDS: la organización lógica y el modo de interpretar/acceder al contenido son diferentes.
+Having only a DATA component does not make ESDS, RRDS, and LDS equivalent. Their logical organization and the way their contents are interpreted and accessed are different.
 
-## RRDS observado
+## RRDS Observations
 
-El LISTCAT de esta sesión confirmó, entre otros atributos:
+The LISTCAT performed during this session confirmed:
 
-- `NUMBERED`.
-- `AVGLRECL=80` y `MAXLRECL=80`.
-- `REC-TOTAL=0` antes de cargar datos.
-- `HI-A-RBA=49152` y `HI-U-RBA=0`.
-- CI físico de 4096 bytes.
-- `SPLITS-CI=0` y `SPLITS-CA=0`.
-- componente DATA sin INDEX.
-- volumen `SBWAS1`.
+- NUMBERED.
+- AVGLRECL=80 and MAXLRECL=80.
+- REC-TOTAL=0 before loading data.
+- HI-A-RBA=49152 and HI-U-RBA=0.
+- Physical CI size of 4096 bytes.
+- SPLITS-CI=0 and SPLITS-CA=0.
+- DATA component with no INDEX component.
+- Volume SBWAS1.
 
-Esto deja un baseline útil para comparar el estado antes y después de cargar registros.
+This establishes a useful baseline for comparing the state of the cluster before and after records are loaded.
 
-## LDS observado
+## LDS Observations
 
-El LDS se definió como `LINEAR`, sin `RECORDSIZE`, `KEYS`, `NUMBERED` ni componente INDEX. El LISTCAT posterior confirmó el cluster y su componente DATA. El LDS completa la comparación de las cuatro organizaciones tratadas en esta fase.
+The LDS was defined as LINEAR, without RECORDSIZE, KEYS, NUMBERED, or an INDEX component.
 
-## JCL de esta parte
+The subsequent LISTCAT confirmed the cluster and its DATA component. The LDS therefore completes the structural comparison of the four VSAM organizations covered in this phase.
 
-- `jcl/LSTRRDS.jcl`
-- `jcl/DEFLDS.jcl`
-- `jcl/LSTLDS.jcl`
+## JCL Used in This Part
 
-## Evidencias
+- jcl/LSTRRDS.jcl
+- jcl/DEFLDS.jcl
+- jcl/LSTLDS.jcl
 
-Las capturas de SDSF, IDCAMS e ISPF usadas durante la ejecución se conservan en `evidence/screenshots/`. Incluyen la validación del RRDS, creación del LDS, LISTCAT y la vista conjunta de los componentes VSAM.
+## Evidence
 
-## Resultado
+The SDSF, IDCAMS, and ISPF screenshots collected during execution are stored under evidence/screenshots/.
 
-**Parte 2 completada.** La fase de definición e inspección de los cuatro tipos VSAM queda cerrada con ejecuciones correctas y evidencia real.
+They include evidence of the RRDS validation, LDS creation, LISTCAT execution, successful condition codes, and the combined ISPF view of the VSAM components.
 
-## Próxima parte — no ejecutada todavía
+## Result
 
-La siguiente sesión cambia de fase: pasaremos de clusters vacíos a datos reales.
+Part 2 completed.
 
-```text
-Dataset secuencial de entrada
+The definition and inspection phase for all four VSAM types is now complete, with successful executions and real system evidence.
+
+## Next Part — Not Yet Executed
+
+The next session will move to a new phase: from empty VSAM clusters to real data.
+
+Sequential input dataset
         |
         v
    IDCAMS REPRO
         |
         v
-   clusters VSAM
+    VSAM clusters
         |
-        +--> ESDS: observar RBA
-        +--> KSDS: acceso por KEY
-        +--> RRDS: acceso por RRN
-```
+        +--> ESDS: observe RBA
+        +--> KSDS: KEY-based access
+        +--> RRDS: RRN-based access
 
-Antes de ejecutar REPRO se diseñarán los registros de prueba, se comprobarán las longitudes y, para el KSDS, la clave definida como `KEYS(8 0)`. El JCL se revisará preventivamente antes de cada SUBMIT.
+Before executing REPRO, the test records will be designed and their lengths verified.
 
-## Referencia principal
+For the KSDS in particular, the record structure must comply with the previously defined KEYS(8 0).
 
-La secuencia práctica sigue el material de vídeo utilizado en la sesión. Como complemento técnico se mantiene IBM Redbooks, *VSAM Demystified*, SG24-6105.
+The JCL will be reviewed preventively before each SUBMIT.
+
+## Primary Reference
+
+The practical sequence follows the video material used during the session.
+
+As a complementary technical reference, IBM Redbooks, VSAM Demystified, SG24-6105, is retained.
