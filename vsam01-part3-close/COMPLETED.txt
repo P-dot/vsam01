@@ -1,0 +1,11 @@
+VSAM01 PART 3 - COMPLETED
+
+Validated:
+- Sequential source IBMUSER.VSAM.INPUT created/cataloged (CC 0000)
+- ESDS REPRO: 5 records processed, CC 0000
+- ESDS LISTCAT after load: REC-TOTAL=5
+- KSDS REPRO: 5 records processed, CC 0000
+- KSDS LISTCAT after load: REC-TOTAL=5, KEYLEN=8, RKP=0
+- KSDS cluster/DATA/INDEX inspected
+
+Boundary: RRDS/RRN continues in Part 4.

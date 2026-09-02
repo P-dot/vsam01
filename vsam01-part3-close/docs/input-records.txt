@@ -1,0 +1,9 @@
+00000001ALPHA
+00000002BRAVO
+00000003CHARLIE
+00000004DELTA
+00000005ECHO
+
+Source dataset: IBMUSER.VSAM.INPUT
+DSORG=PS, RECFM=FB, LRECL=80
+For the KSDS, bytes 1-8 are the key because the cluster was defined with KEYS(8 0).
