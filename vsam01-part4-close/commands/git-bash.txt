@@ -1,0 +1,20 @@
+cd /c/Users/$USERNAME/Downloads
+unzip -o vsam01-part4-complete.zip -d vsam01-part4-unpacked
+
+cd /c/Carrera_Ciberseguridad/06_Portfolio_GitHub/vsam01
+rm -rf vsam01-part4-close
+cp -r /c/Users/$USERNAME/Downloads/vsam01-part4-unpacked/vsam01-part4-close .
+
+find vsam01-part4-close -type f | sort
+find vsam01-part4-close/evidence/screenshots -type f | sort
+
+grep -RInE '(^|[^0-9])(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3})([^0-9]|$)|([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}' vsam01-part4-close || true
+
+git status --short
+git add vsam01-part4-close
+git diff --cached --stat
+git status
+git commit -m "Add VSAM01 Part 4 RRN KEY RBA access lab"
+git pull --rebase origin main
+git push origin main
+git status
