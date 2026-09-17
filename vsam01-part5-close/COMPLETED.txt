@@ -1,0 +1,11 @@
+VSAM01 Part 5 — Controlled KSDS Lifecycle Recovery
+Status: COMPLETED / RECOVERY VALIDATED
+
+Validated chain:
+Baseline-A -> controlled DELETE -> absence validation -> structure recovery -> empty-structure validation -> data recovery -> Baseline-B -> KEY functional validation.
+
+Final functional evidence:
+KEY 00000003 -> exactly one record -> 00000003CHARLIE
+
+Architecture intent:
+Capability-gap-driven work under Architecture V2 / Engineering Control Plane principles; not selected merely by lab number.

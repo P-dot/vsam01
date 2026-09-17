@@ -1,0 +1,33 @@
+# 1) Unpack the closure package downloaded from ChatGPT
+cd /c/Users/$USERNAME/Downloads
+unzip -o vsam01-part5-complete.zip -d vsam01-part5-unpacked
+
+# 2) Copy it into the local VSAM repository
+cd /c/Carrera_Ciberseguridad/06_Portfolio_GitHub/vsam01
+mkdir -p vsam01-part5-close
+cp -r /c/Users/$USERNAME/Downloads/vsam01-part5-unpacked/vsam01-part5-close/. vsam01-part5-close/
+
+# 3) Verify package contents
+find vsam01-part5-close -type f | sort
+
+# 4) Security check before publication: private IPv4 / MAC patterns
+# Review any match manually; do not publish sensitive host/network identifiers.
+grep -RInE '(^|[^0-9])(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3})([^0-9]|$)|([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}' vsam01-part5-close || true
+
+# 5) Review Git changes before staging
+git status --short
+git diff -- vsam01-part5-close
+
+# 6) Stage and review exactly what will be committed
+git add vsam01-part5-close
+git diff --cached --stat
+git diff --cached -- vsam01-part5-close/README.md
+git diff --cached -- vsam01-part5-close/docs/technical-notes.md
+
+# 7) Commit and synchronize
+git commit -m "Add controlled KSDS lifecycle recovery evidence"
+git pull --rebase origin main
+git push origin main
+
+# 8) Final verification
+git status
