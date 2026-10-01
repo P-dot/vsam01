@@ -2,18 +2,24 @@
 
 ## Role
 
-This repository provides the VSAM data-set organization and access layer of the broader z/OS Engineering Laboratory.
+This repository provides the VSAM data-set organization, access and scoped lifecycle-recovery layer of the broader z/OS Engineering Laboratory.
 
-Its purpose is to validate how VSAM clusters are defined, inspected, loaded, addressed, and recovered using real z/OS tooling and evidence. The repository currently covers the four principal organizations used in the lab sequence:
+Its purpose is to validate how VSAM clusters are defined, inspected, loaded, addressed and recovered using real z/OS tooling and evidence.
+
+The repository currently validates:
 
 - ESDS — Entry-Sequenced Data Set
 - KSDS — Key-Sequenced Data Set
 - RRDS — Relative Record Data Set
 - LDS — Linear Data Set
+- IDCAMS definition and catalog inspection
+- sequential-data loading with REPRO
+- RBA, KEY and RRN record selection
+- controlled KSDS deletion, reconstruction, data restore and functional recovery validation
 
-The repository owns VSAM structure, catalog interpretation, IDCAMS operations, record loading and addressing behavior.
+The repository owns VSAM structure, catalog interpretation, IDCAMS operations, record loading, organization-specific addressing behavior and the scoped recovery mechanics demonstrated by Part 5.
 
-It does not own general JCL fundamentals, COBOL language mechanics, scheduler orchestration, RACF policy, Db2, CICS, or platform-wide storage administration.
+It does not own general JCL fundamentals, COBOL language mechanics, scheduler orchestration, RACF policy, Db2, CICS, or platform-wide storage administration and disaster recovery.
 
 ```text
 MVS_TSO_ISPF
@@ -45,23 +51,20 @@ Use the scheduler repository to orchestrate the workload later.
 
 This repository does not use a `labs/` directory.
 
-Its validated work is organized as:
+The root is the domain landing page. Validated execution phases remain separate publication units:
 
 ```text
 README.md
 docs/
-evidence/
-jcl/
-ops/
-references/
-rollback/
 
+vsam01-part1-close/
 vsam01-part2-close/
 vsam01-part3-close/
 vsam01-part4-close/
+vsam01-part5-close/
 ```
 
-The root repository contains the first structural phase. Later validated phases are preserved as separate publication units.
+Part 1 was historically documented in the root README. During the Portfolio Navigation V2 documentation change, that original README was preserved as `vsam01-part1-close/README.md` so the execution history remains available while the root becomes the repository landing page.
 
 ## Upstream Dependencies
 
@@ -81,7 +84,7 @@ Status: **Foundational dependency**
 
 Provides reusable JCL and JES2 fundamentals.
 
-VSAM-specific JCL is kept in this repository because it directly expresses IDCAMS operations against VSAM clusters, but generic JOB/EXEC/DD mechanics belong in `JCL_LABS`.
+VSAM-specific JCL remains here because it directly expresses IDCAMS operations against VSAM clusters. Generic JOB/EXEC/DD mechanics belong in `JCL_LABS`.
 
 Relationship:
 
@@ -101,7 +104,7 @@ Status: **Active architectural dependency**
 
 ### Part 1 — ESDS, KSDS and initial RRDS
 
-The root phase establishes the VSAM structural baseline.
+Part 1 establishes the VSAM structural baseline.
 
 Validated areas include:
 
@@ -133,10 +136,8 @@ Part 2 completes the structural comparison by:
 - validating `LINEAR`;
 - confirming that ESDS, RRDS and LDS can all have only a DATA component while remaining logically different organizations.
 
-Validated structural comparison:
-
-| Type | IDCAMS organization | Characteristic addressing | Components |
-| --- | --- | --- | --- |
+| Type | IDCAMS organization | Characteristic access / interpretation | Components |
+|---|---|---|---|
 | ESDS | NONINDEXED | RBA | DATA |
 | KSDS | INDEXED | KEY | DATA + INDEX |
 | RRDS | NUMBERED | RRN | DATA |
@@ -147,8 +148,6 @@ Status: **Validated**
 ### Part 3 — Loading ESDS and KSDS
 
 Part 3 moves from empty-cluster inspection to data-bearing tests.
-
-Validated flow:
 
 ```text
 sequential FB input
@@ -161,19 +160,18 @@ IDCAMS REPRO
       +--> KSDS
 ```
 
-The test source contains five 80-byte records.
-
 Validated results include:
 
 - sequential FB input creation;
+- five 80-byte test records;
 - `REPRO` into ESDS;
-- `REC-TOTAL=5` observed;
+- ESDS `REC-TOTAL=5`;
 - `REPRO` into KSDS;
-- `REC-TOTAL=5` observed;
+- KSDS `REC-TOTAL=5`;
 - `KEYLEN=8`;
 - `RKP=0`;
-- DATA and INDEX inspected separately;
-- successful IDCAMS completion with condition code 0.
+- separate DATA and INDEX inspection;
+- successful IDCAMS completion.
 
 Status: **Validated**
 
@@ -185,55 +183,97 @@ Part 4 validates three different addressing models using the same logical record
 00000003CHARLIE
 ```
 
-Validated access paths:
-
 ```text
 RRDS -> RRN -> FROMNUMBER(3)
 KSDS -> KEY -> FROMKEY(00000003)
 ESDS -> RBA -> FROMADDRESS(160)
 ```
 
-The ESDS RBA was observed using IDCAMS PRINT before being used. It was not assumed.
+The ESDS RBA was observed using IDCAMS `PRINT` before being used. It was not assumed.
 
-The same record was successfully selected through three different VSAM addressing mechanisms.
+Status: **Validated**
+
+### Part 5 — Controlled KSDS lifecycle recovery
+
+Part 5 closes a resilience capability gap rather than simply extending the numbering sequence.
+
+Validated lifecycle:
+
+```text
+Baseline-A
+    |
+    v
+Controlled DELETE
+    |
+    v
+Validate absence
+    |
+    v
+Recover structure
+    |
+    v
+Validate empty structure
+    |
+    v
+Recover data
+    |
+    v
+Baseline-B
+    |
+    v
+Functional KEY validation
+    |
+    v
+RECOVERY VALIDATED
+```
+
+Validated results include:
+
+- healthy pre-change KSDS baseline with DATA + INDEX and five expected records;
+- explicitly scoped cluster deletion with IDCAMS CC 0000;
+- independent absence validation;
+- expected `CC=0004` / not-found result retained as successful negative validation;
+- recreation of the historical KSDS definition;
+- validation of the empty reconstructed structure;
+- restore of five records from `IBMUSER.VSAM.INPUT`;
+- Baseline-B acceptance comparison;
+- independent KEY `00000003` functional validation;
+- final Browse result `00000003CHARLIE`.
+
+Architecture V2 / Engineering Control classification for this scoped capability:
+
+| Dimension | Classification |
+|---|---|
+| Domain | Application and Data Engineering |
+| Capability | VSAM dataset lifecycle management and validated recovery |
+| Lifecycle | Baseline → Controlled Change → Validate → Recover → Validate |
+| Maturity | M2 Operational → M3 Resilient, scoped capability |
+| Integration level | I1 |
+| Recovery | Defined before change and executed successfully |
 
 Status: **Validated**
 
 ## Validated Capability Progression
 
 ```text
-catalog baseline
+STRUCTURE
+Parts 1-2
+DEFINE / LISTCAT
       |
       v
-DEFINE ESDS
+DATA
+Part 3
+REPRO / validate
       |
       v
-DEFINE KSDS
+ACCESS
+Part 4
+RBA / KEY / RRN
       |
       v
-DEFINE RRDS
-      |
-      v
-DEFINE LDS
-      |
-      v
-LISTCAT structural inspection
-      |
-      v
-REPRO data load
-      |
-      +--> ESDS
-      |
-      +--> KSDS
-      |
-      +--> RRDS
-      |
-      v
-record selection
-      |
-      +--> RBA
-      +--> KEY
-      +--> RRN
+RESILIENCE
+Part 5
+controlled loss / recover / validate
 ```
 
 ## Consumes
@@ -261,8 +301,9 @@ This repository produces:
 - addressing demonstrations;
 - LISTCAT evidence;
 - SDSF and ISPF evidence;
-- rollback JCL;
-- reusable VSAM data structures for later COBOL and scheduler integration.
+- controlled-change and recovery JCL;
+- reusable VSAM structures for later application integration;
+- recovery evidence and acceptance criteria for the scoped KSDS lifecycle.
 
 ## Validated Integration Paths
 
@@ -303,59 +344,45 @@ PS / FB input
  IDCAMS REPRO
      |
      +--> ESDS
-     |
      +--> KSDS
-     |
      +--> RRDS
 ```
 
 Status: **Validated across Parts 3 and 4**
 
-### ESDS addressing
+### Characteristic access
 
 ```text
-ESDS
- |
- v
-RBA
- |
- v
-FROMADDRESS
+ESDS -> RBA -> FROMADDRESS
+KSDS -> KEY -> FROMKEY
+RRDS -> RRN -> FROMNUMBER
 ```
 
-Status: **Validated**
+Status: **Validated in Part 4**
 
-### KSDS addressing
+### Controlled KSDS recovery
 
 ```text
-KSDS
- |
- v
-KEY
- |
- v
-FROMKEY
+known-good KSDS
+      |
+      v
+controlled deletion
+      |
+      v
+recreate structure
+      |
+      v
+restore data
+      |
+      v
+baseline + KEY validation
 ```
 
-Status: **Validated**
-
-### RRDS addressing
-
-```text
-RRDS
- |
- v
-RRN
- |
- v
-FROMNUMBER
-```
-
-Status: **Validated**
+Status: **Validated in Part 5**
 
 ## Planned Cross-Repository Paths
 
-The following are architectural targets. They must not be described as completed integrations until validated in the relevant repositories.
+The following are architectural targets. They must not be described as completed integrations until validated in the appropriate repositories.
 
 ### COBOL and VSAM
 
@@ -369,7 +396,7 @@ COBOL
 VSAM
 ```
 
-Target capabilities:
+Target capabilities include:
 
 - sequential VSAM access from COBOL;
 - keyed KSDS access;
@@ -397,19 +424,9 @@ zos-batch-scheduler
         |
         v
       VSAM
-        |
-        v
-     RC / result
 ```
 
-Target capabilities:
-
-- scheduled cluster preparation;
-- scheduled load/refresh;
-- dependency-controlled execution;
-- return-code classification;
-- rerun/restart behavior;
-- production-day orchestration.
+Target capabilities include scheduled preparation, dependency control, return-code classification, rerun/restart behavior and production-day orchestration.
 
 Status: **Planned integration**
 
@@ -428,93 +445,20 @@ VSAM
 SMF / audit
 ```
 
-Target capabilities:
-
-- least-privilege data-set access;
-- application identity control;
-- auditable batch access;
-- controlled update and recovery.
+Target capabilities include least-privilege data-set access, application identity control and auditable batch access.
 
 Status: **Planned cross-repository integration**
-
-## Cross-Repository Production Tracks
-
-### Secure Batch Application
-
-```text
-Scheduler / JCL
-      |
-      v
-     RACF
-      |
-      v
-     VSAM
-      |
-      v
-    COBOL
-      |
-      v
-     SMF
-```
-
-VSAM acts as the persistent application data layer.
-
-### Enterprise Batch Operations
-
-```text
-Scheduler
-   |
-   v
-JCL / JES2
-   |
-   v
-IDCAMS / COBOL
-   |
-   v
-VSAM
-   |
-   v
-RC / recovery
-```
-
-### End-to-End Production Cycle
-
-```text
-Scheduler
-   |
-   v
-JCL / JES2
-   |
-   v
-VSAM preparation
-   |
-   v
-COBOL workload
-   |
-   v
-result validation
-   |
-   v
-backup / housekeeping
-   |
-   v
-scheduler history
-```
 
 ## Integration Status
 
 | Capability | Status | Evidence |
-| --- | --- | --- |
-| Catalog baseline | Validated | Root phase |
-| ESDS definition | Validated | Root phase |
-| KSDS definition | Validated | Root phase |
-| RRDS definition | Validated | Root phase |
+|---|---|---|
+| Catalog baseline | Validated | Part 1 |
+| ESDS definition | Validated | Part 1 |
+| KSDS definition | Validated | Part 1 |
+| RRDS definition | Validated | Parts 1–2 |
 | LDS definition | Validated | Part 2 |
-| ESDS LISTCAT analysis | Validated | Root phase |
-| KSDS DATA/INDEX analysis | Validated | Root phase |
-| RRDS LISTCAT analysis | Validated | Part 2 |
-| LDS LISTCAT analysis | Validated | Part 2 |
-| IDCAMS syntax troubleshooting | Validated | Root phase |
+| Four-organization structural comparison | Validated | Part 2 |
 | Sequential input creation | Validated | Part 3 |
 | REPRO to ESDS | Validated | Part 3 |
 | REPRO to KSDS | Validated | Part 3 |
@@ -522,8 +466,12 @@ scheduler history
 | ESDS RBA access | Validated | Part 4 |
 | KSDS KEY access | Validated | Part 4 |
 | RRDS RRN access | Validated | Part 4 |
-| COBOL -> VSAM | Planned | Application integration track |
-| Scheduler -> VSAM | Planned | Scheduler integration track |
+| Controlled KSDS deletion | Validated | Part 5 |
+| KSDS structure reconstruction | Validated | Part 5 |
+| KSDS data restore | Validated | Part 5 |
+| Post-recovery KEY validation | Validated | Part 5 |
+| COBOL → VSAM | Planned | Application integration track |
+| Scheduler → VSAM | Planned | Scheduler integration track |
 | RACF-protected application access | Planned | Security integration track |
 | End-to-end production cycle | Planned | Ecosystem roadmap |
 
@@ -539,62 +487,54 @@ It does **not** replace:
 - `zos-batch-scheduler` for ordering, dependencies, resources, calendars and orchestration;
 - `DB2-` for relational data management;
 - `CICS` for online transaction management;
-- the core z/OS Engineering Laboratory for system-wide storage, catalog, DFSMS, backup and recovery engineering.
+- the core z/OS Engineering Laboratory for system-wide storage, catalog, DFSMS, backup and disaster-recovery engineering.
 
 ```text
-VSAM organization/access       -> here
-JCL fundamentals               -> JCL_LABS
-COBOL application logic        -> COBOL
-RACF policy                    -> mainframe-racf-security-evidence
-scheduler orchestration        -> zos-batch-scheduler
-system storage/recovery        -> core z/OS Engineering Laboratory
+VSAM organization/access/recovery -> here
+JCL fundamentals                  -> JCL_LABS
+COBOL application logic           -> COBOL
+RACF policy                       -> mainframe-racf-security-evidence
+scheduler orchestration           -> zos-batch-scheduler
+system-wide storage/recovery      -> core z/OS Engineering Laboratory
 ```
 
 ## Publication Structure Rule
 
-The validated continuation units must remain distinct:
+The validated units must remain distinct:
 
 ```text
-root phase
-vsam01-part2-close
-vsam01-part3-close
-vsam01-part4-close
-```
-
-Each phase represents a controlled expansion of scope:
-
-```text
-Part 1 -> structures
+Part 1 -> structural baseline
 Part 2 -> all four VSAM organizations
 Part 3 -> real data in ESDS and KSDS
 Part 4 -> RRDS load and RRN / KEY / RBA comparison
+Part 5 -> controlled KSDS lifecycle recovery
 ```
 
 They should not be collapsed in a way that loses execution chronology or evidence boundaries.
 
-## Current Boundary
+## Current Validated Boundary
 
-The current validated sequence ends after the Part 4 addressing comparison.
+The current sequence ends with **controlled recovery of the scoped KSDS capability in Part 5**.
 
-Part 4 explicitly leaves the following outside its scope:
+Part 5 demonstrates deletion and recovery only for the explicitly controlled KSDS scenario. It does not establish that every VSAM deletion, update, failure mode, organization or disaster-recovery scenario has been validated.
 
-- updates;
-- deletes;
-- duplicate-key tests;
+Capabilities not established by the current evidence remain future work, including:
+
+- broader update/delete behavior outside the scoped Part 5 recovery scenario;
+- duplicate-key/error-path experiments;
 - CI split experiments;
-- CA split experiments.
-
-These should be treated as future VSAM work, not as already completed capabilities.
+- CA split experiments;
+- COBOL file access;
+- RACF-controlled application access;
+- scheduler-controlled VSAM application workflows.
 
 ## Development Direction
 
-A sensible progression from the current state is:
-
 ```text
-validated addressing
+validated KSDS recovery
       |
       v
-update / delete operations
+additional update / delete semantics
       |
       v
 duplicate-key and error paths
@@ -612,10 +552,10 @@ RACF-controlled application access
 scheduler-controlled batch
       |
       v
-production recovery workflows
+integrated production workflows
 ```
 
-The repository should remain the canonical location for VSAM-specific mechanics while application and orchestration logic remain in their owning repositories.
+The repository remains the canonical location for VSAM-specific mechanics. Application, security and orchestration logic remain in their owning repositories.
 
 ## Engineering and Publication Rules
 
@@ -630,7 +570,7 @@ Each new VSAM phase should record:
 - data used for tests;
 - exact addressing method;
 - troubleshooting and root cause;
-- rollback where destructive changes are possible;
+- rollback/recovery where destructive changes are possible;
 - evidence and screenshots;
 - explicit separation between validated and planned behavior.
 
@@ -642,15 +582,14 @@ Build -> Execute -> Observe -> Diagnose -> Correct -> Validate -> Document
 
 Before publication:
 
-- verify that successful IDCAMS paths show the expected condition code;
+- verify expected condition codes in context rather than assuming every non-zero result is a failure;
 - preserve real failure evidence when it contributes technical value;
-- do not publish credentials, IP addresses, MAC addresses, terminal/network identifiers or host-side network details;
-- keep rollback limited to lab-owned resources;
-- preserve the phase boundaries of Parts 1-4;
+- do not publish credentials, private IP addresses, MAC addresses, terminal/network identifiers or host-side network details;
+- keep destructive operations and rollback limited to lab-owned resources;
+- validate recovery artifacts before destructive change when the scenario depends on them;
+- preserve phase boundaries;
 - use short-lived branches and merge completed work into `main`.
 
 ## Master Architecture
 
-The broader ecosystem architecture is maintained in:
-
-https://github.com/P-dot/zos-adcd-hercules-engineering-lab
+The broader ecosystem architecture is maintained in the [z/OS ADCD Hercules Engineering Lab](https://github.com/P-dot/zos-adcd-hercules-engineering-lab).

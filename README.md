@@ -1,313 +1,339 @@
-# VSAM01 — Fundamentos de VSAM: ESDS, KSDS y RRDS
+# VSAM Data Engineering Labs on z/OS
 
-## Objetivo
+> **VSAM structure, catalog analysis, data loading, characteristic access, lifecycle control, and validated recovery on IBM z/OS.**
 
-Construir una primera base práctica de administración VSAM en un sistema **IBM ADCD z/OS 1.11 sobre Hercules**, demostrando mediante IDCAMS, SDSF, ISPF y `LISTCAT` las diferencias entre:
+This repository is the **VSAM data-engineering domain** of the [IBM z/OS Mainframe Engineering Portfolio](https://github.com/P-dot).
 
-- **ESDS** — Entry-Sequenced Data Set.
-- **KSDS** — Key-Sequenced Data Set.
-- **RRDS** — Relative Record Data Set.
+It validates VSAM behavior through real IDCAMS execution and system evidence, progressing from cluster definition and catalog inspection to data loading, organization-specific access and controlled KSDS recovery.
 
-El propósito no es limitarse a ejecutar `DEFINE CLUSTER`. El laboratorio documenta el inventario previo, la asignación física, las relaciones entre cluster y componentes, los atributos del catálogo, un error real de sintaxis y su corrección.
+General JCL, COBOL application logic, RACF policy, scheduler orchestration and platform-wide storage engineering remain owned by their specialized repositories.
 
-![Comparación ESDS, KSDS y RRDS](evidence/diagrams/02-esds-ksds-rrds-access.png)
+---
 
-## Entorno
+## Navigate
 
-- Host: Windows.
-- Emulador: Hercules.
-- Sistema: IBM ADCD z/OS 1.11.
-- Usuario: `IBMUSER`.
-- Librería JCL: `IBMUSER.MI.JCL`.
-- Utilidad: IDCAMS.
-- Interfaces: ISPF 3.4 y SDSF.
-- Volumen de trabajo: `SBWAS1`.
-- Catálogo observado: `CATALOG.Z111S.MASTER`.
+| Destination | Engineering focus |
+|---|---|
+| [Part 1 — VSAM Foundations](vsam01-part1-close/README.md) | ESDS, KSDS, initial RRDS, `DEFINE`, `LISTCAT` and IDCAMS troubleshooting |
+| [Part 2 — Four VSAM Organizations](vsam01-part2-close/README.md) | ESDS, KSDS, RRDS and LDS structural comparison |
+| [Part 3 — Loading ESDS and KSDS](vsam01-part3-close/README.md) | Sequential FB input, `REPRO`, data-bearing clusters and catalog validation |
+| [Part 4 — RRN vs KEY vs RBA](vsam01-part4-close/README.md) | Characteristic record selection across RRDS, KSDS and ESDS |
+| [Part 5 — Controlled KSDS Recovery](vsam01-part5-close/README.md) | Baseline, controlled deletion, reconstruction, data restore and functional validation |
+| [Ecosystem Integration](docs/ECOSYSTEM-INTEGRATION.md) | Ownership, dependencies, validated paths, boundaries and roadmap |
 
-## Alcance
+> Part 1 was originally documented in the repository root. Its original README has been preserved as a dedicated publication unit so that the root can serve as the domain landing page without losing the historical lab record.
 
-Este laboratorio completa:
+---
 
-1. Baseline de catálogo y prefijo.
-2. Creación e inspección de un ESDS.
-3. Creación e inspección de un KSDS.
-4. Creación y verificación inicial de un RRDS.
-5. Diagnóstico del error `IDC3211I KEYWORD 'INDEX' IS IMPROPER`.
+## Repository Role
 
-Quedan expresamente pendientes para la siguiente sesión:
+| Attribute | Scope |
+|---|---|
+| Engineering domain | Application and Data Engineering / VSAM |
+| Platform | IBM z/OS |
+| Primary tooling | IDCAMS, JCL, LISTCAT, PRINT, REPRO |
+| Interactive environment | TSO/E / ISPF |
+| Execution environment | JES2 / SDSF |
+| Organizations validated | ESDS, KSDS, RRDS, LDS |
+| Characteristic access validated | RBA, KEY, RRN |
+| Recovery capability | Controlled KSDS reconstruction and data restore |
+| Engineering workflow | Build → Execute → Observe → Diagnose → Correct → Validate → Document |
 
-- `LISTCAT ALL` del RRDS.
-- Creación y análisis de un LDS.
-- Carga de registros mediante `REPRO`.
-- Acceso por RBA, clave y RRN con datos reales.
+This repository owns **VSAM-specific structure, catalog interpretation, IDCAMS operations, loading, addressing behavior and scoped lifecycle recovery**.
 
-## Arquitectura observada
+It does not replace `JCL_LABS` for generic JCL, `COBOL` for application-language mechanics, `mainframe-racf-security-evidence` for RACF policy, `zos-batch-scheduler` for workload orchestration, or the core z/OS engineering repository for platform-wide storage and recovery engineering.
 
-![Cluster y componentes](evidence/diagrams/01-vsam-cluster-components.png)
+---
+
+## Capability Progression
+
+The validated sequence now forms a complete engineering story rather than a collection of unrelated exercises:
 
 ```text
-ESDS
-└── DATA
+STRUCTURE
+Parts 1–2
+DEFINE / LISTCAT
+ESDS / KSDS / RRDS / LDS
+        |
+        v
+DATA
+Part 3
+PS FB input
+REPRO -> ESDS / KSDS
+        |
+        v
+ACCESS
+Part 4
+RRDS -> RRN
+KSDS -> KEY
+ESDS -> RBA
+        |
+        v
+RESILIENCE
+Part 5
+baseline
+controlled loss
+reconstruct
+restore
+validate
+```
+
+---
+
+## Validated Lab Progression
+
+| Phase | Capability | Key evidence | State |
+|---|---|---|---|
+| [Part 1](vsam01-part1-close/README.md) | Structural baseline | ESDS/KSDS definition, initial RRDS, `LISTCAT`, DATA/INDEX distinction and real IDCAMS syntax diagnosis | Validated |
+| [Part 2](vsam01-part2-close/README.md) | Four organization models | `NONINDEXED`, `INDEXED`, `NUMBERED`, `LINEAR`; ESDS/KSDS/RRDS/LDS comparison | Validated |
+| [Part 3](vsam01-part3-close/README.md) | Data loading | Five 80-byte records, `REPRO` to ESDS/KSDS, `REC-TOTAL=5`, KSDS key metadata | Validated |
+| [Part 4](vsam01-part4-close/README.md) | Characteristic access | Same logical record selected through RRN, KEY and observed RBA | Validated |
+| [Part 5](vsam01-part5-close/README.md) | Controlled recovery | Baseline-A → DELETE → absence → recreate → reload → Baseline-B → KEY validation | Validated |
+
+---
+
+## Four VSAM Organizations
+
+| Organization | IDCAMS model | Characteristic access / interpretation | Components demonstrated |
+|---|---|---|---|
+| ESDS | `NONINDEXED` | Entry sequence / RBA | DATA |
+| KSDS | `INDEXED` | KEY | DATA + INDEX |
+| RRDS | `NUMBERED` | RRN | DATA |
+| LDS | `LINEAR` | Linear byte / CI space | DATA |
+
+A DATA-only component model does not make ESDS, RRDS and LDS equivalent. Their logical organizations and access semantics remain different.
+
+---
+
+## Same Record, Different Access Model
+
+Part 4 deliberately validates three addressing mechanisms against the same logical record:
+
+```text
+00000003CHARLIE
+```
+
+```text
+RRDS
+  |
+  +--> RRN 3
+       FROMNUMBER(3)
 
 KSDS
-├── DATA
-└── INDEX
+  |
+  +--> KEY 00000003
+       FROMKEY(00000003)
 
-RRDS
-└── DATA
+ESDS
+  |
+  +--> observed RBA 160
+       FROMADDRESS(160)
 ```
 
-En ISPF, el cluster aparece como una entidad lógica `*VSAM*`; el volumen físico se asocia a sus componentes DATA e INDEX.
+The ESDS address was first observed with IDCAMS `PRINT`; it was not assumed.
 
-## Flujo ejecutado
+This separates the **logical record** from the **organization-specific method used to locate it**.
+
+---
+
+## Recovery as an Engineered Lifecycle
+
+Part 5 advances the repository beyond successful creation and access.
 
 ```text
-VSAMINV
-   ↓
-Baseline de IBMUSER.MI.JCL y prefijo IBMUSER.VSAM.*
-   ↓
-DEFESDS → LSTESDS
-   ↓
-DEFKSDS → error IDC3211I → corrección → LSTKSDS
-   ↓
-DEFRRDS
+Baseline-A
+    |
+    v
+Controlled DELETE
+    |
+    v
+Validate absence
+    |
+    v
+Recreate KSDS structure
+    |
+    v
+Validate empty structure
+    |
+    v
+Restore five records
+    |
+    v
+Baseline-B
+    |
+    v
+Functional KEY validation
+    |
+    v
+RECOVERY VALIDATED
 ```
 
-## 1. Inventario inicial
+The acceptance result is stronger than a successful IDCAMS condition code. The state was measured before the destructive change, absence was independently confirmed, structure and data were recovered separately, and the restored KSDS passed structural, content and KEY-access validation.
 
-`VSAMINV` ejecutó una consulta de solo lectura:
+The `CC=0004` produced by the deliberate post-delete `LISTCAT` check is retained as an **expected validation outcome**, not incorrectly treated as a failed recovery.
+
+---
+
+## Architecture V2 / Engineering Control
+
+Part 5 explicitly introduces Architecture V2 engineering-control concepts for the scoped KSDS capability:
+
+| Dimension | Validated interpretation |
+|---|---|
+| Lifecycle | Baseline → Controlled Change → Validate → Recover → Validate |
+| Capability gap addressed | Controlled loss + reconstruction + data restore + functional validation |
+| Maturity movement | M2 Operational → M3 Resilient, scoped to the demonstrated capability |
+| Integration level | I1 |
+| Recovery | Defined before change and successfully executed |
+| Acceptance | Baseline comparison plus functional KEY validation |
+
+This classification applies to the demonstrated KSDS recovery capability; it is not a claim that every VSAM recovery scenario or the entire repository has reached the same maturity.
+
+---
+
+## Evidence and Troubleshooting
+
+The repository follows the portfolio evidence workflow:
 
 ```text
-LISTCAT ENT(IBMUSER.MI.JCL) ALL
+BUILD
+  ↓
+EXECUTE
+  ↓
+OBSERVE
+  ↓
+DIAGNOSE
+  ↓
+CORRECT
+  ↓
+VALIDATE
+  ↓
+DOCUMENT
 ```
 
-Resultado observado:
+Examples retained as engineering evidence include:
 
-- `IBMUSER.MI.JCL` era una entrada `NONVSAM`.
-- Catálogo: `CATALOG.Z111S.MASTER`.
-- Volumen: `SBSYS1`.
-- Condición final: `CC 0000`.
-- El prefijo `IBMUSER.VSAM.*` no contenía datasets.
+- the Part 1 IDCAMS error `IDC3211I KEYWORD 'INDEX' IS IMPROPER`, followed by correction and successful KSDS definition;
+- catalog state before and after loading;
+- independently observed ESDS RBA before address-based selection;
+- expected `NOT FOUND` validation after controlled KSDS deletion;
+- separate structure and data recovery stages;
+- post-recovery KEY-based functional validation.
 
-Esta fase evitó colisiones y proporcionó un baseline antes de modificar el catálogo.
+A return code is evidence about an operation. It is not, by itself, proof that the complete intended state has been restored.
 
-![Baseline IDCAMS](evidence/screenshots/02-vsaminv-listcat-baseline.png)
+---
 
-## 2. Creación del ESDS
+## Validation Scope: Local vs Ecosystem
 
-El ESDS se definió mediante:
+| Capability / relationship | VSAM repository | Portfolio status |
+|---|---|---|
+| JCL → IDCAMS → VSAM | **VALIDATED LOCALLY** | Parts 1–5 |
+| ESDS / KSDS / RRDS / LDS definition and inspection | **VALIDATED LOCALLY** | Parts 1–2 |
+| Sequential input → `REPRO` → VSAM | **VALIDATED LOCALLY** | Parts 3–4 |
+| ESDS RBA / KSDS KEY / RRDS RRN selection | **VALIDATED LOCALLY** | Part 4 |
+| Controlled KSDS recovery | **VALIDATED LOCALLY** | Part 5 |
+| COBOL → VSAM application access | **PLANNED** | Not claimed as completed |
+| Scheduler → VSAM workflow | **PLANNED** | Not claimed as completed |
+| RACF-controlled application access to VSAM | **PLANNED** | Not claimed as completed |
+| End-to-end production application cycle | **PLANNED** | Not claimed as completed |
+
+A cross-repository architecture diagram expresses intended relationships; it does not automatically prove that the integration has been implemented.
+
+---
+
+## Repository Boundaries
 
 ```text
-NONINDEXED
-RECORDSIZE(80 80)
-TRACKS(1 1)
-VOLUMES(SBWAS1)
-CONTROLINTERVALSIZE(4096)
+MVS_TSO_ISPF
+      |
+      v
+   JCL_LABS
+      |
+      v
+    VSAM
+    / | \
+   /  |  \
+COBOL | Scheduler
+      |
+   Security
 ```
 
-Objetos creados:
+| Domain | Owner |
+|---|---|
+| VSAM organization, IDCAMS, access and scoped recovery | This repository |
+| General JCL and JES2 fundamentals | [JCL_LABS](https://github.com/P-dot/JCL_LABS) |
+| COBOL language and application logic | [COBOL](https://github.com/P-dot/COBOL) |
+| RACF policy and authorization engineering | [mainframe-racf-security-evidence](https://github.com/P-dot/mainframe-racf-security-evidence) |
+| Batch orchestration | [zos-batch-scheduler](https://github.com/P-dot/zos-batch-scheduler) |
+| Core platform/storage engineering | [zos-adcd-hercules-engineering-lab](https://github.com/P-dot/zos-adcd-hercules-engineering-lab) |
+| Db2 relational data management | [DB2-](https://github.com/P-dot/DB2-) |
+| CICS transaction processing | [CICS](https://github.com/P-dot/CICS) |
 
-```text
-IBMUSER.VSAM.LAB01.ESDS
-IBMUSER.VSAM.LAB01.ESDS.DATA
-```
+---
 
-El cluster no tiene componente INDEX. Los registros se conservan en orden de entrada y pueden localizarse mediante RBA cuando la aplicación conoce dicha dirección.
-
-![ESDS en ISPF](evidence/screenshots/05-esds-cluster-data-ispf.png)
-
-## 3. Análisis del ESDS con LISTCAT
-
-`LSTESDS` confirmó:
-
-- `NONINDEXED`.
-- `KEYLEN=0`.
-- `AVGLRECL=80`.
-- `MAXLRECL=80`.
-- `REC-TOTAL=0`.
-- `HI-U-RBA=0`.
-- `HI-A-RBA=49152`.
-- Volumen físico `SBWAS1`.
-- Tamaño físico/CI observado de 4096 bytes.
-
-La diferencia entre `HI-A-RBA` y `HI-U-RBA` muestra que el componente tenía espacio asignado, pero todavía no contenía registros.
-
-![Atributos ESDS](evidence/screenshots/06-listcat-esds-cluster-attributes.png)
-
-## 4. Creación del KSDS
-
-El KSDS se definió mediante:
-
-```text
-INDEXED
-KEYS(8 0)
-RECORDSIZE(80 80)
-```
-
-`KEYS(8 0)` indica:
-
-- longitud de clave: 8 bytes;
-- desplazamiento de la clave: byte 0;
-- la clave ocupa las posiciones 0–7 del registro.
-
-Objetos creados:
-
-```text
-IBMUSER.VSAM.LAB01.KSDS
-IBMUSER.VSAM.LAB01.KSDS.DATA
-IBMUSER.VSAM.LAB01.KSDS.INDEX
-```
-
-![ESDS y KSDS en ISPF](evidence/screenshots/11-esds-ksds-components-ispf.png)
-
-## 5. Incidencia real: IDC3211I
-
-El primer intento de `DEFKSDS` finalizó con:
-
-```text
-IDC3211I KEYWORD 'INDEX' IS IMPROPER
-IDC3202I ABOVE TEXT BYPASSED UNTIL NEXT COMMAND. CONDITION CODE IS 12
-```
-
-Causa:
-
-```text
-INDEX
-  (INDEX(IBMUSER.VSAM.LAB01.KSDS.INDEX))
-```
-
-La palabra `INDEX` ya identificaba el componente. Dentro del bloque debía utilizarse el atributo `NAME`.
-
-Corrección:
-
-```text
-INDEX
-  (NAME(IBMUSER.VSAM.LAB01.KSDS.INDEX))
-```
-
-Tras la corrección, el job terminó con `CC 0000`.
-
-![Error IDC3211I](evidence/screenshots/22-defksds-idc3211i-index-improper.png)
-
-## 6. Análisis del KSDS con LISTCAT
-
-`LSTKSDS` permitió inspeccionar por separado:
-
-- el cluster;
-- el componente DATA;
-- el componente INDEX.
-
-El catálogo confirmó:
-
-- `INDEXED`.
-- `KEYLEN=8`.
-- `RKP=0`.
-- asociación con DATA e INDEX;
-- asignación independiente para cada componente;
-- ambos componentes inicialmente vacíos;
-- residencia física en `SBWAS1`.
-
-![LISTCAT KSDS](evidence/screenshots/12-listcat-ksds-cluster.png)
-
-## 7. Creación del RRDS
-
-El RRDS se definió mediante:
-
-```text
-NUMBERED
-RECORDSIZE(80 80)
-```
-
-Objetos creados:
-
-```text
-IBMUSER.VSAM.LAB01.RRDS
-IBMUSER.VSAM.LAB01.RRDS.DATA
-```
-
-El RRDS fijo organiza el espacio en slots y utiliza el **Relative Record Number (RRN)** como argumento de acceso. No crea componente INDEX.
-
-![RRDS en ISPF](evidence/screenshots/21-rrds-cluster-data-ispf.png)
-
-## Comparación final
-
-| Organización | Orden / identificación | Acceso característico | DATA | INDEX |
-|---|---|---|---:|---:|
-| ESDS | Orden de entrada | RBA | Sí | No |
-| KSDS | Secuencia lógica de clave | Clave primaria | Sí | Sí |
-| RRDS | Slots numerados | RRN | Sí | No |
-
-## Control Area y Control Interval
-
-![Control Area y Control Interval](evidence/diagrams/03-control-area-control-interval.png)
-
-El laboratorio utilizó `CONTROLINTERVALSIZE(4096)` para mantener una base homogénea. Un Control Interval contiene registros, espacio disponible y campos de control. Varios CI forman una Control Area.
-
-## Resultados
-
-- Baseline ejecutado con `CC 0000`.
-- ESDS creado e inspeccionado.
-- KSDS creado e inspeccionado.
-- RRDS creado y visible en ISPF.
-- Error real `IDC3211I` diagnosticado y corregido.
-- Cluster y componentes diferenciados visualmente.
-- Evidencias reales conservadas en `evidence/screenshots/`.
-- Diagramas propios conservados en `evidence/diagrams/`.
-
-## Seguridad operacional
-
-- Se utilizaron exclusivamente nombres bajo `IBMUSER.VSAM.LAB01.*`.
-- Los clusters se asignaron al volumen de trabajo `SBWAS1`.
-- No se modificaron datasets `SYS1.*`, `ADCD.*`, catálogos del sistema ni clusters de producto.
-- El rollback incluido elimina únicamente los tres clusters creados por este laboratorio.
-- Antes de ejecutar el rollback debe comprobarse que ningún proceso mantiene los datasets abiertos.
-
-## Estructura
+## Publication Structure
 
 ```text
 vsam01/
 ├── README.md
 ├── docs/
-├── evidence/
-│   ├── diagrams/
-│   ├── output/
-│   └── screenshots/
-├── jcl/
-├── ops/
-├── references/
-└── rollback/
+│   └── ECOSYSTEM-INTEGRATION.md
+├── vsam01-part1-close/
+│   └── README.md
+├── vsam01-part2-close/
+├── vsam01-part3-close/
+├── vsam01-part4-close/
+└── vsam01-part5-close/
 ```
 
-## Valor profesional
+The five phases remain separate because each captures a controlled expansion of capability and its own evidence boundary.
 
-El laboratorio demuestra capacidad para:
-
-- trabajar con IDCAMS;
-- interpretar catálogo y componentes VSAM;
-- diferenciar ESDS, KSDS y RRDS;
-- analizar `LISTCAT ALL`;
-- interpretar atributos como `KEYLEN`, `RKP`, `HI-A-RBA` y `HI-U-RBA`;
-- diagnosticar sintaxis IDCAMS mediante mensajes reales;
-- mantener evidencias de SDSF e ISPF;
-- operar de forma controlada sobre un entorno z/OS de laboratorio.
-
-## Referencia técnica
-
-- IBM Redbooks, **VSAM Demystified**, SG24-6105-02, Third Edition, August 2022.
+The root README is now the **domain landing page**. Detailed implementation and execution history remain in the phase-specific documentation.
 
 ---
 
-## Part of the z/OS Engineering Laboratory
+## Next Engineering Direction
 
-This repository is a specialized component of the broader **z/OS Engineering Laboratory** built on z/OS ADCD 1.11 / Hercules.
+The current validated boundary is recovery of the scoped KSDS lifecycle demonstrated in Part 5.
 
-### Master architecture
+Future VSAM-specific work can extend into capabilities not yet demonstrated by the current evidence, such as broader update/delete semantics, duplicate-key/error paths, CI/CA behavior and additional recovery cases.
 
-https://github.com/P-dot/zos-adcd-hercules-engineering-lab
-
-### Engineering methodology
+Cross-domain progression remains separate:
 
 ```text
-Build -> Execute -> Observe -> Diagnose -> Correct -> Validate -> Document
+validated VSAM mechanics
+        |
+        +--> COBOL file access
+        |
+        +--> RACF-controlled application access
+        |
+        +--> scheduler-controlled batch
+        |
+        v
+integrated production workflow
 ```
 
+These integrations remain **planned until validated evidence exists in the appropriate owning repositories**.
+
+---
+
+## Security and Publication Standard
+
+Before publication, JCL, command output, catalog listings, screenshots and configuration fragments should be reviewed for credentials, tokens, private IP addresses, MAC addresses, host adapter identifiers, unnecessary terminal/session identifiers and other host-specific information that does not need to be public.
+
+Destructive operations must remain explicitly scoped to lab-owned resources, and recovery artifacts should be validated before controlled change whenever the scenario depends on them.
+
+---
+
+## Continue Through the Portfolio
+
+[Portfolio Home](https://github.com/P-dot) ·
+[Core z/OS Engineering](https://github.com/P-dot/zos-adcd-hercules-engineering-lab) ·
+[JCL](https://github.com/P-dot/JCL_LABS) ·
+[COBOL](https://github.com/P-dot/COBOL) ·
+[CICS](https://github.com/P-dot/CICS) ·
+[Db2](https://github.com/P-dot/DB2-) ·
+[RACF Security](https://github.com/P-dot/mainframe-racf-security-evidence)
+
+> Part of the **IBM z/OS Mainframe Engineering Portfolio** — an independent hands-on environment focused on systems, operations, development, security, automation, diagnostics, recovery and integration.
