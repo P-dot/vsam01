@@ -10,7 +10,7 @@ Construir una primera base práctica de administración VSAM en un sistema **IBM
 
 El propósito no es limitarse a ejecutar `DEFINE CLUSTER`. El laboratorio documenta el inventario previo, la asignación física, las relaciones entre cluster y componentes, los atributos del catálogo, un error real de sintaxis y su corrección.
 
-![Comparación ESDS, KSDS y RRDS](evidence/diagrams/02-esds-ksds-rrds-access.png)
+![Comparación ESDS, KSDS y RRDS](../evidence/diagrams/02-esds-ksds-rrds-access.png)
 
 ## Entorno
 
@@ -43,7 +43,7 @@ Quedan expresamente pendientes para la siguiente sesión:
 
 ## Arquitectura observada
 
-![Cluster y componentes](evidence/diagrams/01-vsam-cluster-components.png)
+![Cluster y componentes](../evidence/diagrams/01-vsam-cluster-components.png)
 
 ```text
 ESDS
@@ -91,7 +91,7 @@ Resultado observado:
 
 Esta fase evitó colisiones y proporcionó un baseline antes de modificar el catálogo.
 
-![Baseline IDCAMS](evidence/screenshots/02-vsaminv-listcat-baseline.png)
+![Baseline IDCAMS](../evidence/screenshots/02-vsaminv-listcat-baseline.png)
 
 ## 2. Creación del ESDS
 
@@ -114,7 +114,7 @@ IBMUSER.VSAM.LAB01.ESDS.DATA
 
 El cluster no tiene componente INDEX. Los registros se conservan en orden de entrada y pueden localizarse mediante RBA cuando la aplicación conoce dicha dirección.
 
-![ESDS en ISPF](evidence/screenshots/05-esds-cluster-data-ispf.png)
+![ESDS en ISPF](../evidence/screenshots/05-esds-cluster-data-ispf.png)
 
 ## 3. Análisis del ESDS con LISTCAT
 
@@ -132,7 +132,7 @@ El cluster no tiene componente INDEX. Los registros se conservan en orden de ent
 
 La diferencia entre `HI-A-RBA` y `HI-U-RBA` muestra que el componente tenía espacio asignado, pero todavía no contenía registros.
 
-![Atributos ESDS](evidence/screenshots/06-listcat-esds-cluster-attributes.png)
+![Atributos ESDS](../evidence/screenshots/06-listcat-esds-cluster-attributes.png)
 
 ## 4. Creación del KSDS
 
@@ -158,7 +158,7 @@ IBMUSER.VSAM.LAB01.KSDS.DATA
 IBMUSER.VSAM.LAB01.KSDS.INDEX
 ```
 
-![ESDS y KSDS en ISPF](evidence/screenshots/11-esds-ksds-components-ispf.png)
+![ESDS y KSDS en ISPF](../evidence/screenshots/11-esds-ksds-components-ispf.png)
 
 ## 5. Incidencia real: IDC3211I
 
@@ -187,7 +187,7 @@ INDEX
 
 Tras la corrección, el job terminó con `CC 0000`.
 
-![Error IDC3211I](evidence/screenshots/22-defksds-idc3211i-index-improper.png)
+![Error IDC3211I](../evidence/screenshots/22-defksds-idc3211i-index-improper.png)
 
 ## 6. Análisis del KSDS con LISTCAT
 
@@ -207,7 +207,7 @@ El catálogo confirmó:
 - ambos componentes inicialmente vacíos;
 - residencia física en `SBWAS1`.
 
-![LISTCAT KSDS](evidence/screenshots/12-listcat-ksds-cluster.png)
+![LISTCAT KSDS](../evidence/screenshots/12-listcat-ksds-cluster.png)
 
 ## 7. Creación del RRDS
 
@@ -227,7 +227,7 @@ IBMUSER.VSAM.LAB01.RRDS.DATA
 
 El RRDS fijo organiza el espacio en slots y utiliza el **Relative Record Number (RRN)** como argumento de acceso. No crea componente INDEX.
 
-![RRDS en ISPF](evidence/screenshots/21-rrds-cluster-data-ispf.png)
+![RRDS en ISPF](../evidence/screenshots/21-rrds-cluster-data-ispf.png)
 
 ## Comparación final
 
@@ -239,7 +239,7 @@ El RRDS fijo organiza el espacio en slots y utiliza el **Relative Record Number 
 
 ## Control Area y Control Interval
 
-![Control Area y Control Interval](evidence/diagrams/03-control-area-control-interval.png)
+![Control Area y Control Interval](../evidence/diagrams/03-control-area-control-interval.png)
 
 El laboratorio utilizó `CONTROLINTERVALSIZE(4096)` para mantener una base homogénea. Un Control Interval contiene registros, espacio disponible y campos de control. Varios CI forman una Control Area.
 
