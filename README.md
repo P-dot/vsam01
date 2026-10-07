@@ -357,3 +357,14 @@ VSAM is not only an application-file topic. In Db2 for z/OS, table spaces and in
 **Recommended path:** [VSAM structure and LDS](https://github.com/P-dot/vsam01) → [Db2 for z/OS](https://github.com/P-dot/DB2-) → [application integration](https://github.com/P-dot/mainframe-cobol-db2-cics-devops-lab) → [RACF/SAF](https://github.com/P-dot/mainframe-racf-security-evidence) → recovery/diagnostics.
 
 [Open the z/OS Engineering Academy →](https://github.com/P-dot/P-dot/blob/main/docs/ACADEMY.md)
+
+
+---
+
+## z/OS Engineering Academy
+
+**Academy role:** Storage School — native record storage and the physical concepts that also underpin other z/OS data services.
+
+[Start the Academy](https://github.com/P-dot/P-dot/blob/main/docs/ACADEMY.md) · [Course Catalog](https://github.com/P-dot/P-dot/blob/main/docs/COURSES.md) · [Curriculum Graph](https://github.com/P-dot/P-dot/blob/main/docs/CURRICULUM.md) · [Cross-Domain Relationships](https://github.com/P-dot/P-dot/blob/main/docs/RELATIONSHIPS.md)
+
+> Learn the concept → execute the lab → interpret the evidence → understand the subsystem boundary → continue to the next connected course.
