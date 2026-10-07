@@ -337,3 +337,23 @@ Destructive operations must remain explicitly scoped to lab-owned resources, and
 [RACF Security](https://github.com/P-dot/mainframe-racf-security-evidence)
 
 > Part of the **IBM z/OS Mainframe Engineering Portfolio** — an independent hands-on environment focused on systems, operations, development, security, automation, diagnostics, recovery and integration.
+
+---
+
+## Academy bridge — from VSAM to Db2 storage
+
+VSAM is not only an application-file topic. In Db2 for z/OS, table spaces and index spaces are page sets backed by VSAM data sets. That makes this repository a physical-storage prerequisite for understanding what sits below Db2 SQL.
+
+**Recommended path:** [VSAM structure and LDS](https://github.com/P-dot/vsam01) → [Db2 for z/OS](https://github.com/P-dot/DB2-) → [application integration](https://github.com/P-dot/mainframe-cobol-db2-cics-devops-lab) → [RACF/SAF](https://github.com/P-dot/mainframe-racf-security-evidence) → recovery/diagnostics.
+
+[Open the z/OS Engineering Academy →](https://github.com/P-dot/P-dot/blob/main/docs/ACADEMY.md)
+
+---
+
+## Academy bridge — from VSAM to Db2 storage
+
+VSAM is not only an application-file topic. In Db2 for z/OS, table spaces and index spaces are page sets backed by VSAM data sets. That makes this repository a physical-storage prerequisite for understanding what sits below Db2 SQL.
+
+**Recommended path:** [VSAM structure and LDS](https://github.com/P-dot/vsam01) → [Db2 for z/OS](https://github.com/P-dot/DB2-) → [application integration](https://github.com/P-dot/mainframe-cobol-db2-cics-devops-lab) → [RACF/SAF](https://github.com/P-dot/mainframe-racf-security-evidence) → recovery/diagnostics.
+
+[Open the z/OS Engineering Academy →](https://github.com/P-dot/P-dot/blob/main/docs/ACADEMY.md)
